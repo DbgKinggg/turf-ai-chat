@@ -1,11 +1,7 @@
 'use client'
 
-import { ChatInterface } from '@/components/chat/chat-interface'
+import { ModernChatInterface } from '@/components/chat/modern-chat-interface'
 
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-background">
-      <ChatInterface />
-    </div>
-  )
+  return <ModernChatInterface />
 }
