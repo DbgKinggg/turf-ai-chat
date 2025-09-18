@@ -81,28 +81,28 @@ export async function POST(req: Request) {
         tool: 'coingeckotokeninfoagent_get_trending_coins',
         args: {},
         context: 'trending cryptocurrency data',
-        instructions: 'format this data into a nice markdown table with columns for Rank, Name, Symbol, Price, and Market Cap Rank'
+        instructions: 'format this data into a comprehensive markdown table with columns for Rank, Name, Symbol, Price, and Market Cap Rank. Use proper markdown headers and include analysis below the table'
       },
       {
         pattern: (msg: string) => (msg.includes('price') || msg.includes('cost')) && (msg.includes('bitcoin') || msg.includes('btc')),
         tool: 'coingeckotokeninfoagent_get_token_info',
         args: { coingecko_id: 'bitcoin' },
         context: 'Bitcoin price and market data',
-        instructions: 'format this data showing current price, market cap, 24h change, and other key metrics in a clear format'
+        instructions: 'format this data in a structured table showing current price, market cap, 24h change, and other key metrics. Use markdown headers and provide insights below the data'
       },
       {
         pattern: (msg: string) => (msg.includes('price') || msg.includes('cost')) && (msg.includes('ethereum') || msg.includes('eth')),
         tool: 'coingeckotokeninfoagent_get_token_info',
         args: { coingecko_id: 'ethereum' },
         context: 'Ethereum price and market data',
-        instructions: 'format this data showing current price, market cap, 24h change, and other key metrics in a clear format'
+        instructions: 'format this data in a structured table showing current price, market cap, 24h change, and other key metrics. Use markdown headers and provide insights below the data'
       },
       {
         pattern: (msg: string) => msg.includes('search') && (msg.includes('crypto') || msg.includes('news') || msg.includes('bitcoin') || msg.includes('ethereum')),
         tool: 'exasearchagent_exa_web_search',
         args: { query: lastMessage },
         context: 'crypto news and information',
-        instructions: 'summarize the key findings and present them in a well-organized format'
+        instructions: 'summarize the key findings in a structured format using markdown tables when appropriate (e.g., for multiple sources/results). Use proper headings, bullet points, and organize information clearly'
       }
     ]
 
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
               role: 'system',
               content: `Here is the current ${detectedQuery.context}: ${JSON.stringify(toolResult, null, 2)}.
 
-              Please ${detectedQuery.instructions}. Include proper formatting and add relevant analysis.`
+              Please ${detectedQuery.instructions}. Always use markdown tables for structured data and lists. Include proper markdown hierarchy with headers, and add relevant analysis and insights.`
             }
           ]
         }

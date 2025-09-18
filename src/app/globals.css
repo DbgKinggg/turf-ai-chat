@@ -121,3 +121,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Ensure Streamdown list markers are visible */
+@layer components {
+  [data-streamdown="unordered-list"] {
+    list-style-type: disc !important;
+    margin-left: 1rem !important;
+    padding-left: 0.5rem !important;
+  }
+
+  [data-streamdown="ordered-list"] {
+    list-style-type: decimal !important;
+    margin-left: 1rem !important;
+    padding-left: 0.5rem !important;
+  }
+
+  [data-streamdown="list-item"] {
+    display: list-item !important;
+    margin-left: 0 !important;
+  }
+}
