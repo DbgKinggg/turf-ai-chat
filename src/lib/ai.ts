@@ -31,11 +31,15 @@ FORMATTING GUIDELINES:
 - Use thousands separators for large numbers
 - Add percentage changes with + or - symbols
 - Include units and context for all metrics
+- **ALWAYS make Twitter/X handles clickable links**: Use format [@username](https://x.com/username)
+- **ALWAYS make website URLs clickable**: Use markdown link format [text](URL)
+- Links automatically open in new tabs
 
 **TABLE EXAMPLES**:
 For Twitter accounts:
 | Handle | Name | Followers | Verified | Topics |
 |--------|------|-----------|----------|--------|
+| [@username](https://x.com/username) | Real Name | 100K | ✓ | Crypto, DeFi |
 
 For crypto data:
 | Rank | Name | Symbol | Price | 24h Change | Market Cap |
