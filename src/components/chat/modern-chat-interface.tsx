@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Response } from '@/components/ai-elements/response'
 import { cn } from '@/lib/utils'
 
 interface Chat {
@@ -36,6 +37,14 @@ export function ModernChatInterface() {
       timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000)
     }
   ])
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+  }
   const [activeChat, setActiveChat] = useState('1')
 
   const { messages, sendMessage, status, error } = useChat()
@@ -181,7 +190,7 @@ export function ModernChatInterface() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {chat.timestamp.toLocaleDateString()}
+                    {formatDate(chat.timestamp)}
                   </p>
                 </div>
               ))}
@@ -262,7 +271,7 @@ export function ModernChatInterface() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {chat.timestamp.toLocaleDateString()}
+                    {formatDate(chat.timestamp)}
                   </p>
                 </div>
               ))}
@@ -371,15 +380,20 @@ export function ModernChatInterface() {
                         <div className="text-sm font-medium">
                           {message.role === 'user' ? 'You' : 'Turf AI'}
                         </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <div className="whitespace-pre-wrap">
-                            {message.parts?.map((part, index) => {
-                              if (part.type === 'text') {
-                                return <div key={`${message.id}-${index}`}>{part.text}</div>
-                              }
-                              return null
-                            })}
-                          </div>
+                        <div className="max-w-none">
+                          {message.role === 'user' ? (
+                            <div className="whitespace-pre-wrap">
+                              {message.parts?.map((part) =>
+                                part.type === 'text' ? part.text : ''
+                              ).join('')}
+                            </div>
+                          ) : (
+                            <Response parseIncompleteMarkdown>
+                              {message.parts?.map((part) =>
+                                part.type === 'text' ? part.text : ''
+                              ).join('')}
+                            </Response>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -400,7 +414,7 @@ export function ModernChatInterface() {
                             <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"></div>
                           </div>
                           <span className="text-sm text-muted-foreground">
-                            {status === 'loading' ? 'Connecting...' : 'Responding...'}
+                            Responding...
                           </span>
                         </div>
                       </div>
@@ -443,7 +457,7 @@ export function ModernChatInterface() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border">
                   <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <span>
-                    {status === 'loading' ? 'Connecting to Turf AI...' : 'Turf AI is thinking...'}
+                    Turf AI is thinking...
                   </span>
                 </div>
               </div>

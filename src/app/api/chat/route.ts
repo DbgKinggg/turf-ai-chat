@@ -10,25 +10,12 @@ interface MCPClient {
 }
 
 export async function POST(req: Request) {
-  // let coinGeckoClient: MCPClient | null = null
   let heuristClient: MCPClient | null = null
 
   try {
     const { messages } = await req.json()
 
-    // Initialize MCP clients for real-time crypto data access
-
-    // CoinGecko MCP Client (for market data) - Temporarily disabled to reduce token usage
-    // try {
-    //   coinGeckoClient = await experimental_createMCPClient({
-    //     transport: {
-    //       type: 'sse',
-    //       url: 'https://mcp.api.coingecko.com/sse'
-    //     }
-    //   })
-    // } catch (error) {
-    //   // Silent fail for CoinGecko
-    // }
+    // Initialize Heurist MCP client for crypto data access
 
     // Heurist Mesh MCP Client (for advanced crypto intelligence)
     try {
@@ -45,18 +32,9 @@ export async function POST(req: Request) {
       // Silent fail for Heurist
     }
 
-    // Collect tools from both MCP servers
+    // Collect tools from Heurist MCP server
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allTools: Record<string, any> = {}
-
-    // if (coinGeckoClient) {
-    //   try {
-    //     const coinGeckoTools = await coinGeckoClient.tools()
-    //     Object.assign(allTools, coinGeckoTools)
-    //   } catch (error) {
-    //     // Silent fail
-    //   }
-    // }
 
     if (heuristClient) {
       try {
@@ -87,6 +65,8 @@ export async function POST(req: Request) {
 
 
     // Generate response with access to all crypto intelligence tools
+    console.log('Available tools:', Object.keys(allTools))
+
     const result = streamText({
       model,
       messages: convertToModelMessages(messages),
@@ -94,15 +74,7 @@ export async function POST(req: Request) {
       temperature: 0.7,
       tools: Object.keys(allTools).length > 0 ? allTools : undefined,
       onFinish: async () => {
-        // Clean up MCP clients
-        // if (coinGeckoClient) {
-        //   try {
-        //     await coinGeckoClient.close()
-        //   } catch (error) {
-        //     // Silent fail
-        //   }
-        // }
-
+        // Clean up MCP client
         if (heuristClient) {
           try {
             await heuristClient.close()
@@ -115,15 +87,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse()
   } catch {
-    // Clean up clients on error
-    // if (coinGeckoClient) {
-    //   try {
-    //     await coinGeckoClient.close()
-    //   } catch {
-    //     // Silent fail
-    //   }
-    // }
-
+    // Clean up client on error
     if (heuristClient) {
       try {
         await heuristClient.close()
