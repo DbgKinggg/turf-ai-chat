@@ -39,7 +39,7 @@ export function ChatInterface() {
               <Bot className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold">Surf AI</h1>
+              <h1 className="text-xl font-semibold">Turf AI</h1>
               <p className="text-sm text-muted-foreground">Crypto Research Assistant</p>
             </div>
           </div>
@@ -54,7 +54,7 @@ export function ChatInterface() {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <Bot className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-semibold mb-2">Welcome to Surf AI</h2>
+              <h2 className="text-2xl font-semibold mb-2">Welcome to Turf AI</h2>
               <p className="text-muted-foreground mb-6 max-w-md">
                 Ask me anything about cryptocurrency markets, projects, or trends. I can help you research and analyze the crypto space.
               </p>
@@ -100,7 +100,7 @@ export function ChatInterface() {
                   </Avatar>
                   <div className="flex-1 space-y-2">
                     <div className="text-sm font-medium">
-                      {message.role === 'user' ? 'You' : 'Surf AI'}
+                      {message.role === 'user' ? 'You' : 'Turf AI'}
                     </div>
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <div className="whitespace-pre-wrap">
@@ -123,7 +123,7 @@ export function ChatInterface() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <div className="text-sm font-medium mb-2">Surf AI</div>
+                    <div className="text-sm font-medium mb-2">Turf AI</div>
                     <div className="flex gap-1">
                       <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                       <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>

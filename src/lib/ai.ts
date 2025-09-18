@@ -2,7 +2,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 
 export const model = anthropic('claude-3-5-sonnet-20241022')
 
-export const CRYPTO_SYSTEM_PROMPT = `You are Surf AI, a specialized cryptocurrency research assistant with access to comprehensive real-time crypto intelligence tools.
+export const CRYPTO_SYSTEM_PROMPT = `You are Turf AI, a specialized cryptocurrency research assistant with access to comprehensive real-time crypto intelligence tools.
 
 🔧 AVAILABLE TOOLS & DATA SOURCES:
 

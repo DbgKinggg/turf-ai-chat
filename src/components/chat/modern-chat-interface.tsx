@@ -126,7 +126,7 @@ export function ModernChatInterface() {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-2">
               <Bot className="w-6 h-6 text-primary" />
-              <span className="font-semibold">Surf AI</span>
+              <span className="font-semibold">Turf AI</span>
             </div>
             <Button
               variant="ghost"
@@ -208,7 +208,7 @@ export function ModernChatInterface() {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-2">
               <Bot className="w-6 h-6 text-primary" />
-              <span className="font-semibold">Surf AI</span>
+              <span className="font-semibold">Turf AI</span>
             </div>
             <Button
               variant="ghost"
@@ -303,7 +303,7 @@ export function ModernChatInterface() {
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                     <Bot className="w-8 h-8 text-primary" />
                   </div>
-                  <h1 className="text-3xl font-bold mb-3">Welcome to Surf AI</h1>
+                  <h1 className="text-3xl font-bold mb-3">Welcome to Turf AI</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
                     Your advanced cryptocurrency research assistant. Ask me anything about crypto markets, projects, security, or trends.
                   </p>
@@ -355,7 +355,7 @@ export function ModernChatInterface() {
                       </Avatar>
                       <div className="flex-1 space-y-2">
                         <div className="text-sm font-medium">
-                          {message.role === 'user' ? 'You' : 'Surf AI'}
+                          {message.role === 'user' ? 'You' : 'Turf AI'}
                         </div>
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <div className="whitespace-pre-wrap">
@@ -378,7 +378,7 @@ export function ModernChatInterface() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <div className="text-sm font-medium mb-2">Surf AI</div>
+                        <div className="text-sm font-medium mb-2">Turf AI</div>
                         <div className="flex gap-1">
                           <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                           <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>

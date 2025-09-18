@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Surf Clone - AI Crypto Research",
+  title: "Turf AI",
   description: "AI-powered cryptocurrency research and analysis platform",
 };
 
