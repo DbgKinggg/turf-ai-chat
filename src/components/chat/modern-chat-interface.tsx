@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
-import { Send, Bot, User, Menu, Plus, Settings, X } from 'lucide-react'
+import { ArrowUp, Bot, User, Menu, Plus, Settings, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -295,8 +295,8 @@ export function ModernChatInterface() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 relative">
-          <ScrollArea className="h-full">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
             <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-full">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[60vh] text-center">
@@ -390,20 +390,21 @@ export function ModernChatInterface() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Chat Input */}
-        <div className="sticky bottom-0 p-4 md:p-8">
-          <div className="max-w-4xl mx-auto">
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 pointer-events-none">
+          <div className="pointer-events-auto">
+          <div className="max-w-2xl mx-auto">
             <form onSubmit={handleSubmit} className="relative">
-              <div className="relative bg-background border border-border rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-200">
+              <div className="relative bg-black/20 border border-white/10 rounded-lg backdrop-blur-sm focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-200">
                 <Textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask about crypto markets, projects, or trends..."
+                  placeholder="Ask about crypto..."
                   className="resize-none border-0 focus-visible:ring-0 bg-transparent p-4 pr-12 min-h-[60px] max-h-[200px] overflow-hidden"
                   disabled={isLoading}
                   rows={1}
@@ -412,19 +413,21 @@ export function ModernChatInterface() {
                   type="submit"
                   disabled={isLoading || !input.trim()}
                   size="sm"
+                  variant="secondary"
                   className="absolute bottom-3 right-3 h-8 w-8 rounded-full"
                 >
-                  <Send className="w-4 h-4" />
+                  <ArrowUp className="w-4 h-4" />
                 </Button>
               </div>
               {input && (
-                <div className="absolute -top-12 right-0">
+                <div className="absolute -top-12 right-0 hidden md:block">
                   <Badge variant="secondary" className="text-xs">
                     ⏎ Send • ⇧⏎ New line
                   </Badge>
                 </div>
               )}
             </form>
+          </div>
           </div>
         </div>
       </div>
