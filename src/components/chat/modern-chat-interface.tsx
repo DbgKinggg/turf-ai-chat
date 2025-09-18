@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Response } from '@/components/ai-elements/response'
 import { cn } from '@/lib/utils'
 
@@ -48,7 +47,7 @@ export function ModernChatInterface() {
   const [activeChat, setActiveChat] = useState('1')
 
   const { messages, sendMessage, status, error } = useChat()
-  const isLoading = status === 'streaming' || status === 'loading'
+  const isLoading = status === 'streaming'
   const hasError = !!error
 
   // Auto-resize textarea
@@ -388,11 +387,47 @@ export function ModernChatInterface() {
                               ).join('')}
                             </div>
                           ) : (
-                            <Response parseIncompleteMarkdown>
-                              {message.parts?.map((part) =>
-                                part.type === 'text' ? part.text : ''
-                              ).join('')}
-                            </Response>
+                            <div className="space-y-2">
+                              {message.parts?.map((part, index) => {
+                                if (part.type === 'text') {
+                                  return (
+                                    <Response key={`text-${index}`} parseIncompleteMarkdown>
+                                      {part.text}
+                                    </Response>
+                                  )
+                                } else if (part.type === 'dynamic-tool') {
+                                  const toolPart = part as any
+                                  const isComplete = toolPart.state === 'output-available'
+
+                                  return (
+                                    <div key={`tool-${index}`} className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-sm">
+                                      <div className="font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                        {isComplete ? 'Fetched' : 'Fetching'} crypto data
+                                        {isComplete && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                                      </div>
+                                      <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                        Using {toolPart.toolName?.replace('coingeckotokeninfoagent_', '').replace('_', ' ')}
+                                      </div>
+                                    </div>
+                                  )
+                                } else if (part.type === 'step-start') {
+                                  // Skip step-start parts as they're just workflow indicators
+                                  return null
+                                } else {
+                                  return (
+                                    <div key={`unknown-${index}`} className="bg-yellow-50 dark:bg-yellow-950/20 rounded-lg p-3 text-sm">
+                                      <div className="font-medium text-yellow-700 dark:text-yellow-400 mb-1">
+                                        Unknown part type: {part.type}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                        {JSON.stringify(part, null, 2)}
+                                      </div>
+                                    </div>
+                                  )
+                                }
+                              })}
+                            </div>
                           )}
                         </div>
                       </div>
