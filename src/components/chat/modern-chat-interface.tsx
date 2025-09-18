@@ -2,12 +2,21 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
-import { ArrowUp, Bot, User, Menu, Plus, Settings, X } from 'lucide-react'
+import { ArrowUp, Bot, User, Menu, Plus, Settings, X, Search, Database, Globe, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Response } from '@/components/ai-elements/response'
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+  ChainOfThoughtSearchResults,
+  ChainOfThoughtSearchResult
+} from '@/components/ai-elements/chain-of-thought'
 import { cn } from '@/lib/utils'
 
 interface Chat {
@@ -388,6 +397,47 @@ export function ModernChatInterface() {
                             </div>
                           ) : (
                             <div className="space-y-2">
+                              {/* Show chain of thought for AI responses */}
+                              {message.role === 'assistant' && message.parts?.some(part => part.type === 'dynamic-tool') && (
+                                <ChainOfThought defaultOpen={isLoading && message === messages[messages.length - 1]}>
+                                  <ChainOfThoughtHeader>
+                                    Analyzing crypto request...
+                                  </ChainOfThoughtHeader>
+                                  <ChainOfThoughtContent>
+                                    <ChainOfThoughtStep
+                                      icon={Search}
+                                      label="Query Analysis"
+                                      description="Examining the user's request to identify required data"
+                                      status="complete"
+                                    />
+                                    <ChainOfThoughtStep
+                                      icon={Database}
+                                      label="Data Source Selection"
+                                      description="Choosing optimal APIs and tools"
+                                      status="complete"
+                                    >
+                                      <ChainOfThoughtSearchResults>
+                                        <ChainOfThoughtSearchResult>CoinGecko API</ChainOfThoughtSearchResult>
+                                        <ChainOfThoughtSearchResult>Web Search</ChainOfThoughtSearchResult>
+                                        <ChainOfThoughtSearchResult>Social Analytics</ChainOfThoughtSearchResult>
+                                      </ChainOfThoughtSearchResults>
+                                    </ChainOfThoughtStep>
+                                    <ChainOfThoughtStep
+                                      icon={Globe}
+                                      label="Data Retrieval"
+                                      description="Fetching live cryptocurrency data"
+                                      status={isLoading && message === messages[messages.length - 1] ? "active" : "complete"}
+                                    />
+                                    <ChainOfThoughtStep
+                                      icon={BarChart3}
+                                      label="Response Formatting"
+                                      description="Organizing data with tables and proper markdown"
+                                      status={isLoading && message === messages[messages.length - 1] ? "pending" : "complete"}
+                                    />
+                                  </ChainOfThoughtContent>
+                                </ChainOfThought>
+                              )}
+
                               {message.parts?.map((part, index) => {
                                 if (part.type === 'text') {
                                   return (
@@ -414,6 +464,14 @@ export function ModernChatInterface() {
                                 } else if (part.type === 'step-start') {
                                   // Skip step-start parts as they're just workflow indicators
                                   return null
+                                } else if (part.type === 'reasoning') {
+                                  // Handle reasoning parts
+                                  return (
+                                    <Reasoning key={`reasoning-${index}`} className="w-full" isStreaming={isLoading && message === messages[messages.length - 1]}>
+                                      <ReasoningTrigger />
+                                      <ReasoningContent>{part.text || 'Thinking through this request...'}</ReasoningContent>
+                                    </Reasoning>
+                                  )
                                 } else {
                                   return (
                                     <div key={`unknown-${index}`} className="bg-yellow-50 dark:bg-yellow-950/20 rounded-lg p-3 text-sm">
