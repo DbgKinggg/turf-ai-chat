@@ -21,6 +21,7 @@ export function ModernChatInterface() {
   const [input, setInput] = useState('')
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [chats, setChats] = useState<Chat[]>([
     {
       id: '1',
@@ -37,7 +38,9 @@ export function ModernChatInterface() {
   ])
   const [activeChat, setActiveChat] = useState('1')
 
-  const { messages, sendMessage, status } = useChat()
+  const { messages, sendMessage, status, error } = useChat()
+  const isLoading = status === 'streaming' || status === 'loading'
+  const hasError = !!error
 
   // Auto-resize textarea
   useEffect(() => {
@@ -47,10 +50,23 @@ export function ModernChatInterface() {
     }
   }, [input])
 
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (scrollAreaRef.current && messages.length > 0) {
+      const scrollElement = scrollAreaRef.current
+      scrollElement.scrollTo({
+        top: scrollElement.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  }, [messages, isLoading])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim()) {
-      sendMessage({ text: input })
+    if (input.trim() && !isLoading) {
+      sendMessage({
+        text: input
+      })
       setInput('')
     }
   }
@@ -61,8 +77,6 @@ export function ModernChatInterface() {
       handleSubmit(e)
     }
   }
-
-  const isLoading = status === 'streaming'
 
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
@@ -296,8 +310,8 @@ export function ModernChatInterface() {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto">
-            <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-full">
+          <div ref={scrollAreaRef} className="h-full overflow-y-auto">
+            <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-full">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[60vh] text-center">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -341,7 +355,7 @@ export function ModernChatInterface() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6 pb-8">
+                <div className="space-y-6 pb-32">
                   {messages.map((message) => (
                     <div key={message.id} className="flex gap-4">
                       <Avatar className="w-8 h-8 shrink-0">
@@ -379,10 +393,36 @@ export function ModernChatInterface() {
                       </Avatar>
                       <div className="flex-1">
                         <div className="text-sm font-medium mb-2">Turf AI</div>
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"></div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                            <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                            <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"></div>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {status === 'loading' ? 'Connecting...' : 'Responding...'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {hasError && (
+                    <div className="flex gap-4">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarFallback className="bg-destructive/10">
+                          <Bot className="w-4 h-4 text-destructive" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium mb-2 text-destructive">Error</div>
+                        <div className="text-sm text-muted-foreground bg-destructive/5 border border-destructive/20 rounded-lg p-3">
+                          {error?.message || 'Something went wrong. Please try again.'}
+                          <button
+                            onClick={() => window.location.reload()}
+                            className="ml-2 text-destructive hover:underline"
+                          >
+                            Refresh page
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -396,7 +436,29 @@ export function ModernChatInterface() {
         {/* Chat Input */}
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 pointer-events-none">
           <div className="pointer-events-auto">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-xl mx-auto">
+            {/* Loading Indicator - only show when loading but no response has started yet */}
+            {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
+              <div className="mb-3 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>
+                    {status === 'loading' ? 'Connecting to Turf AI...' : 'Turf AI is thinking...'}
+                  </span>
+                </div>
+              </div>
+            )}
+            {/* Error Indicator */}
+            {hasError && (
+              <div className="mb-3 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/5 backdrop-blur-sm px-3 py-2 rounded-full border border-destructive/20">
+                  <div className="w-4 h-4 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <span className="text-xs">!</span>
+                  </div>
+                  <span>Connection failed. Please try again.</span>
+                </div>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="relative">
               <div className="relative bg-black/20 border border-white/10 rounded-lg backdrop-blur-sm focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-200">
                 <Textarea
@@ -416,7 +478,11 @@ export function ModernChatInterface() {
                   variant="secondary"
                   className="absolute bottom-3 right-3 h-8 w-8 rounded-full"
                 >
-                  <ArrowUp className="w-4 h-4" />
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
               {input && (

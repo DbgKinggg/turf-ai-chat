@@ -3,6 +3,7 @@ import { model, CRYPTO_SYSTEM_PROMPT } from '@/lib/ai'
 
 export const maxDuration = 30
 
+
 interface MCPClient {
   tools: () => Promise<Record<string, unknown>>
   close: () => Promise<void>
@@ -16,7 +17,6 @@ export async function POST(req: Request) {
     const { messages } = await req.json()
 
     // Initialize MCP clients for real-time crypto data access
-    console.log('Initializing MCP clients...')
 
     // CoinGecko MCP Client (for market data) - Temporarily disabled to reduce token usage
     // try {
@@ -26,9 +26,8 @@ export async function POST(req: Request) {
     //       url: 'https://mcp.api.coingecko.com/sse'
     //     }
     //   })
-    //   console.log('CoinGecko MCP client initialized')
     // } catch (error) {
-    //   console.warn('CoinGecko MCP client failed to initialize:', error)
+    //   // Silent fail for CoinGecko
     // }
 
     // Heurist Mesh MCP Client (for advanced crypto intelligence)
@@ -42,9 +41,8 @@ export async function POST(req: Request) {
           } : undefined
         }
       })
-      console.log('Heurist MCP client initialized')
     } catch (error) {
-      console.warn('Heurist MCP client failed to initialize:', error)
+      // Silent fail for Heurist
     }
 
     // Collect tools from both MCP servers
@@ -55,20 +53,25 @@ export async function POST(req: Request) {
     //   try {
     //     const coinGeckoTools = await coinGeckoClient.tools()
     //     Object.assign(allTools, coinGeckoTools)
-    //     console.log(`Added ${Object.keys(coinGeckoTools).length} CoinGecko tools`)
     //   } catch (error) {
-    //     console.warn('Failed to get CoinGecko tools:', error)
+    //     // Silent fail
     //   }
     // }
 
     if (heuristClient) {
       try {
         const heuristTools = await heuristClient.tools()
-        console.log('Heurist tools received:', JSON.stringify(Object.keys(heuristTools), null, 2))
 
-        // Let's try just adding a subset of tools to see if that works
+        // Enable more tools including web search capabilities
         const limitedTools: Record<string, any> = {}
-        const allowedTools = ['coingeckotokeninfoagent_get_token_price_multi', 'coingeckotokeninfoagent_get_token_info']
+        const allowedTools = [
+          'coingeckotokeninfoagent_get_token_price_multi',
+          'coingeckotokeninfoagent_get_token_info',
+          'coingeckotokeninfoagent_get_trending_coins',
+          'exasearchagent_exa_web_search',
+          'exasearchagent_exa_answer_question',
+          'twitterinfoagent_get_general_search'
+        ]
 
         for (const [name, tool] of Object.entries(heuristTools)) {
           if (allowedTools.includes(name)) {
@@ -77,17 +80,11 @@ export async function POST(req: Request) {
         }
 
         Object.assign(allTools, limitedTools)
-        console.log(`Added ${Object.keys(limitedTools).length} limited Heurist tools:`, Object.keys(limitedTools))
-      } catch (error) {
-        console.warn('Failed to get Heurist tools:', error)
+      } catch {
+        // Silent fail
       }
     }
 
-    console.log(`Total tools available: ${Object.keys(allTools).length}`)
-
-    if (Object.keys(allTools).length > 0) {
-      console.log('Available tool names:', Object.keys(allTools))
-    }
 
     // Generate response with access to all crypto intelligence tools
     const result = streamText({
@@ -97,45 +94,41 @@ export async function POST(req: Request) {
       temperature: 0.7,
       tools: Object.keys(allTools).length > 0 ? allTools : undefined,
       onFinish: async () => {
-        // // Clean up MCP clients
+        // Clean up MCP clients
         // if (coinGeckoClient) {
         //   try {
         //     await coinGeckoClient.close()
-        //     console.log('CoinGecko MCP client closed')
         //   } catch (error) {
-        //     console.warn('Error closing CoinGecko client:', error)
+        //     // Silent fail
         //   }
         // }
 
         if (heuristClient) {
           try {
             await heuristClient.close()
-            console.log('Heurist MCP client closed')
-          } catch (error) {
-            console.warn('Error closing Heurist client:', error)
+          } catch {
+            // Silent fail
           }
         }
       }
     })
 
     return result.toUIMessageStreamResponse()
-  } catch (error) {
-    console.error('Chat API error:', error)
-
-    // // Clean up clients on error
+  } catch {
+    // Clean up clients on error
     // if (coinGeckoClient) {
     //   try {
     //     await coinGeckoClient.close()
-    //   } catch (e) {
-    //     console.warn('Error closing CoinGecko client on error:', e)
+    //   } catch {
+    //     // Silent fail
     //   }
     // }
 
     if (heuristClient) {
       try {
         await heuristClient.close()
-      } catch (e) {
-        console.warn('Error closing Heurist client on error:', e)
+      } catch {
+        // Silent fail
       }
     }
 
