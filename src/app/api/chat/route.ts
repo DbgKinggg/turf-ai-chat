@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages, experimental_createMCPClient } from 'ai'
+import { streamText, convertToModelMessages, experimental_createMCPClient, stepCountIs } from 'ai'
 import { model, CRYPTO_SYSTEM_PROMPT } from '@/lib/ai'
 
 export const maxDuration = 45
@@ -67,90 +67,28 @@ async function getOrCreateMCPClient() {
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json()
-    const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || ''
 
     // Get cached or create new MCP client
-    const { client: heuristClient, tools: allTools } = await getOrCreateMCPClient()
+    const { tools: allTools } = await getOrCreateMCPClient()
 
     console.log('Available tools:', Object.keys(allTools))
 
-    // Detect different types of crypto queries
-    const queryPatterns = [
-      {
-        pattern: (msg: string) => msg.includes('trending') && (msg.includes('crypto') || msg.includes('coin')),
-        tool: 'coingeckotokeninfoagent_get_trending_coins',
-        args: {},
-        context: 'trending cryptocurrency data',
-        instructions: 'format this data into a comprehensive markdown table with columns for Rank, Name, Symbol, Price, and Market Cap Rank. Use proper markdown headers and include analysis below the table'
-      },
-      {
-        pattern: (msg: string) => (msg.includes('price') || msg.includes('cost')) && (msg.includes('bitcoin') || msg.includes('btc')),
-        tool: 'coingeckotokeninfoagent_get_token_info',
-        args: { coingecko_id: 'bitcoin' },
-        context: 'Bitcoin price and market data',
-        instructions: 'format this data in a structured table showing current price, market cap, 24h change, and other key metrics. Use markdown headers and provide insights below the data'
-      },
-      {
-        pattern: (msg: string) => (msg.includes('price') || msg.includes('cost')) && (msg.includes('ethereum') || msg.includes('eth')),
-        tool: 'coingeckotokeninfoagent_get_token_info',
-        args: { coingecko_id: 'ethereum' },
-        context: 'Ethereum price and market data',
-        instructions: 'format this data in a structured table showing current price, market cap, 24h change, and other key metrics. Use markdown headers and provide insights below the data'
-      },
-      {
-        pattern: (msg: string) => msg.includes('search') && (msg.includes('crypto') || msg.includes('news') || msg.includes('bitcoin') || msg.includes('ethereum')),
-        tool: 'exasearchagent_exa_web_search',
-        args: { query: lastMessage },
-        context: 'crypto news and information',
-        instructions: 'summarize the key findings in a structured format using markdown tables when appropriate (e.g., for multiple sources/results). Use proper headings, bullet points, and organize information clearly'
-      }
-    ]
-
-    let enhancedMessages = messages
-    const detectedQuery = queryPatterns.find(q => q.pattern(lastMessage))
-
-    if (detectedQuery && heuristClient && allTools[detectedQuery.tool]) {
-      try {
-        console.log(`📊 Fetching ${detectedQuery.context} manually...`)
-
-        // Call the appropriate tool manually via the tools object
-        const tool = allTools[detectedQuery.tool]
-        const toolResult = await tool(detectedQuery.args)
-
-        console.log('🎯 Tool result:', toolResult)
-
-        if (toolResult) {
-          // Add the tool result as context to the conversation
-          enhancedMessages = [
-            ...messages,
-            {
-              role: 'system',
-              content: `Here is the current ${detectedQuery.context}: ${JSON.stringify(toolResult, null, 2)}.
-
-              Please ${detectedQuery.instructions}. Always use markdown tables for structured data and lists. Include proper markdown hierarchy with headers, and add relevant analysis and insights.`
-            }
-          ]
-        }
-      } catch (error) {
-        console.error(`❌ Error calling ${detectedQuery.tool}:`, error)
-      }
-    }
-
     const result = streamText({
       model,
-      messages: convertToModelMessages(enhancedMessages),
+      messages: convertToModelMessages(messages),
       system: CRYPTO_SYSTEM_PROMPT,
+      tools: allTools,
+      stopWhen: stepCountIs(3),
       temperature: 0.7,
-      onFinish: ({ text, toolCalls, toolResults, usage }) => {
+      onFinish: ({ text, toolCalls, toolResults, usage, steps }) => {
         console.log('🏁 Stream finished:', {
           textLength: text?.length,
           toolCallsCount: toolCalls?.length,
           toolResultsCount: toolResults?.length,
-          usage,
-          wasEnhanced: enhancedMessages.length > messages.length
+          stepsCount: steps?.length,
+          usage
         })
       },
-      // Don't close client on finish - keep it cached
     })
 
     return result.toUIMessageStreamResponse()
