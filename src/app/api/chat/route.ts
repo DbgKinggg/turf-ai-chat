@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       messages: convertToModelMessages(messages),
       system: CRYPTO_SYSTEM_PROMPT,
       tools: allTools,
-      stopWhen: stepCountIs(3),
+      stopWhen: stepCountIs(5),
       temperature: 0.7,
       onFinish: ({ text, toolCalls, toolResults, usage, steps }) => {
         console.log('🏁 Stream finished:', {

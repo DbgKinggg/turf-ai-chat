@@ -438,39 +438,35 @@ export function ModernChatInterface() {
                                     >
                                       <ChainOfThoughtSearchResults>
                                         {(() => {
-                                          const messageText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('').toLowerCase() || '';
                                           const sources: string[] = [];
 
-                                          const fullText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('') || '';
+                                          // Check for actual tool usage in the message parts
+                                          const hasTools = message.parts?.some(part => part.type === 'dynamic-tool' || part.type === 'tool-call');
 
-                                          // Detect CoinGecko usage based on content patterns
-                                          if (message.parts?.some(part => part.type === 'dynamic-tool') ||
-                                              messageText.includes('coingecko') ||
-                                              (fullText.includes('|') && fullText.includes('Price') && fullText.includes('Market Cap')) ||
-                                              (messageText.includes('bitcoin') && fullText.includes('$')) ||
-                                              (messageText.includes('ethereum') && fullText.includes('$')) ||
-                                              (messageText.includes('crypto') && (fullText.includes('$') || fullText.includes('Market Cap')))) {
-                                            sources.push('CoinGecko API');
+                                          if (hasTools) {
+                                            // Extract tool names from the actual tool calls
+                                            message.parts?.forEach(part => {
+                                              if (part.type === 'dynamic-tool' && (part as any).toolName) {
+                                                const toolName = (part as any).toolName;
+                                                if (toolName.includes('coingecko')) {
+                                                  sources.push('CoinGecko API');
+                                                } else if (toolName.includes('search') || toolName.includes('exa')) {
+                                                  sources.push('Web Search');
+                                                } else if (toolName.includes('twitter')) {
+                                                  sources.push('Social Media');
+                                                } else {
+                                                  sources.push('Data API');
+                                                }
+                                              }
+                                            });
                                           }
 
-                                          if (messageText.includes('search') && messageText.includes('web')) {
-                                            sources.push('Web Search');
-                                          }
-
-                                          if (messageText.includes('news') || messageText.includes('latest')) {
-                                            sources.push('News Sources');
-                                          }
-
-                                          if (messageText.includes('twitter') || messageText.includes('social')) {
-                                            sources.push('Social Media');
-                                          }
-
-                                          // Only show Knowledge Base if no other sources
+                                          // Fallback to Knowledge Base if no tools detected
                                           if (sources.length === 0) {
                                             sources.push('Knowledge Base');
                                           }
 
-                                          return sources.map((source, idx) => (
+                                          return [...new Set(sources)].map((source, idx) => (
                                             <ChainOfThoughtSearchResult key={idx}>{source}</ChainOfThoughtSearchResult>
                                           ));
                                         })()}
@@ -480,22 +476,24 @@ export function ModernChatInterface() {
                                       icon={Globe}
                                       label="Data Retrieval"
                                       description={(() => {
-                                        const messageText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('').toLowerCase() || '';
-                                        const fullText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('') || '';
+                                        const hasTools = message.parts?.some(part => part.type === 'dynamic-tool' || part.type === 'tool-call');
 
-                                        if (message.parts?.some(part => part.type === 'dynamic-tool') ||
-                                            messageText.includes('coingecko') ||
-                                            (fullText.includes('|') && fullText.includes('Price') && fullText.includes('Market Cap')) ||
-                                            (messageText.includes('crypto') && (fullText.includes('$') || fullText.includes('Market Cap')))) {
-                                          return "Fetching live cryptocurrency data from CoinGecko";
+                                        if (hasTools) {
+                                          // Check what tool is being used
+                                          const toolPart = message.parts?.find(part => part.type === 'dynamic-tool' && (part as any).toolName);
+                                          if (toolPart) {
+                                            const toolName = (toolPart as any).toolName;
+                                            if (toolName.includes('coingecko')) {
+                                              return "Fetching live data from APIs";
+                                            } else if (toolName.includes('search') || toolName.includes('exa')) {
+                                              return "Searching web for relevant information";
+                                            } else if (toolName.includes('twitter')) {
+                                              return "Gathering social media insights";
+                                            }
+                                          }
+                                          return "Retrieving live data from external sources";
                                         }
-                                        if (messageText.includes('search')) {
-                                          return "Searching web for relevant information";
-                                        }
-                                        if (messageText.includes('news')) {
-                                          return "Gathering latest news and updates";
-                                        }
-                                        return "Processing request";
+                                        return "Processing request with available knowledge";
                                       })()}
                                       status={isLoading && message === messages[messages.length - 1] ? "active" : "complete"}
                                     />
@@ -533,7 +531,7 @@ export function ModernChatInterface() {
                                     <div key={`tool-${index}`} className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 text-sm">
                                       <div className="font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                        {isComplete ? 'Fetched' : 'Fetching'} crypto data
+                                        {isComplete ? 'Fetched' : 'Fetching'} data
                                         {isComplete && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
                                       </div>
                                       <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
