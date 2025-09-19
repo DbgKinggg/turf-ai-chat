@@ -1,6 +1,6 @@
 import { anthropic } from '@ai-sdk/anthropic'
 
-export const model = anthropic('claude-3-5-sonnet-20241022')
+export const model = anthropic('claude-sonnet-4-20250514')
 
 export const CRYPTO_SYSTEM_PROMPT = `You are Turf AI, a cryptocurrency research assistant with access to real-time data tools.
 
