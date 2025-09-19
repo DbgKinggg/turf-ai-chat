@@ -55,9 +55,13 @@ export function ModernChatInterface() {
   }
   const [activeChat, setActiveChat] = useState('1')
 
-  const { messages, sendMessage, status, error } = useChat()
+  const { messages, sendMessage, status, error, setMessages } = useChat()
   const isLoading = status === 'streaming'
   const hasError = !!error
+
+  const handleNewChat = () => {
+    setMessages([])
+  }
 
   // Auto-resize textarea
   useEffect(() => {
@@ -112,9 +116,9 @@ export function ModernChatInterface() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSidebarExpanded(true)}
+              onClick={handleNewChat}
               className="mb-4 w-10 h-10 p-0"
-              title="Expand sidebar"
+              title="New chat"
             >
               <Bot className="w-5 h-5 text-primary" />
             </Button>
@@ -134,6 +138,7 @@ export function ModernChatInterface() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={handleNewChat}
               className="mb-4 w-10 h-10 p-0"
               title="New chat"
             >
@@ -171,7 +176,7 @@ export function ModernChatInterface() {
 
           {/* New Chat Button */}
           <div className="p-4">
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={handleNewChat}>
               <Plus className="w-4 h-4 mr-2" />
               New Chat
             </Button>
@@ -252,7 +257,7 @@ export function ModernChatInterface() {
 
           {/* New Chat Button */}
           <div className="p-4">
-            <Button className="w-full" variant="outline">
+            <Button className="w-full" variant="outline" onClick={handleNewChat}>
               <Plus className="w-4 h-4 mr-2" />
               New Chat
             </Button>
@@ -397,11 +402,26 @@ export function ModernChatInterface() {
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              {/* Show chain of thought for AI responses */}
-                              {message.role === 'assistant' && message.parts?.some(part => part.type === 'dynamic-tool') && (
+                              {/* Show chain of thought for AI responses that seem to be doing research */}
+                              {message.role === 'assistant' && (
+                                message.parts?.some(part => part.type === 'dynamic-tool' || part.type === 'tool-call' || part.type === 'tool-result') ||
+                                (message.parts?.some(part => part.type === 'text' && (
+                                  part.text?.toLowerCase().includes('search') ||
+                                  part.text?.toLowerCase().includes('latest') ||
+                                  part.text?.toLowerCase().includes('news') ||
+                                  part.text?.toLowerCase().includes('web3') ||
+                                  part.text?.toLowerCase().includes('research') ||
+                                  part.text?.toLowerCase().includes('coingecko') ||
+                                  part.text?.toLowerCase().includes('market data') ||
+                                  part.text?.toLowerCase().includes('cryptocurrency') ||
+                                  part.text?.toLowerCase().includes('crypto') ||
+                                  (part.text?.includes('|') && part.text?.includes('Price')) ||
+                                  (part.text?.includes('$') && part.text?.includes('Market Cap'))
+                                )))
+                              ) && (
                                 <ChainOfThought defaultOpen={isLoading && message === messages[messages.length - 1]}>
                                   <ChainOfThoughtHeader>
-                                    Analyzing crypto request...
+                                    Analyzing request...
                                   </ChainOfThoughtHeader>
                                   <ChainOfThoughtContent>
                                     <ChainOfThoughtStep
@@ -417,21 +437,81 @@ export function ModernChatInterface() {
                                       status="complete"
                                     >
                                       <ChainOfThoughtSearchResults>
-                                        <ChainOfThoughtSearchResult>CoinGecko API</ChainOfThoughtSearchResult>
-                                        <ChainOfThoughtSearchResult>Web Search</ChainOfThoughtSearchResult>
-                                        <ChainOfThoughtSearchResult>Social Analytics</ChainOfThoughtSearchResult>
+                                        {(() => {
+                                          const messageText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('').toLowerCase() || '';
+                                          const sources: string[] = [];
+
+                                          const fullText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('') || '';
+
+                                          // Detect CoinGecko usage based on content patterns
+                                          if (message.parts?.some(part => part.type === 'dynamic-tool') ||
+                                              messageText.includes('coingecko') ||
+                                              (fullText.includes('|') && fullText.includes('Price') && fullText.includes('Market Cap')) ||
+                                              (messageText.includes('bitcoin') && fullText.includes('$')) ||
+                                              (messageText.includes('ethereum') && fullText.includes('$')) ||
+                                              (messageText.includes('crypto') && (fullText.includes('$') || fullText.includes('Market Cap')))) {
+                                            sources.push('CoinGecko API');
+                                          }
+
+                                          if (messageText.includes('search') && messageText.includes('web')) {
+                                            sources.push('Web Search');
+                                          }
+
+                                          if (messageText.includes('news') || messageText.includes('latest')) {
+                                            sources.push('News Sources');
+                                          }
+
+                                          if (messageText.includes('twitter') || messageText.includes('social')) {
+                                            sources.push('Social Media');
+                                          }
+
+                                          // Only show Knowledge Base if no other sources
+                                          if (sources.length === 0) {
+                                            sources.push('Knowledge Base');
+                                          }
+
+                                          return sources.map((source, idx) => (
+                                            <ChainOfThoughtSearchResult key={idx}>{source}</ChainOfThoughtSearchResult>
+                                          ));
+                                        })()}
                                       </ChainOfThoughtSearchResults>
                                     </ChainOfThoughtStep>
                                     <ChainOfThoughtStep
                                       icon={Globe}
                                       label="Data Retrieval"
-                                      description="Fetching live cryptocurrency data"
+                                      description={(() => {
+                                        const messageText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('').toLowerCase() || '';
+                                        const fullText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('') || '';
+
+                                        if (message.parts?.some(part => part.type === 'dynamic-tool') ||
+                                            messageText.includes('coingecko') ||
+                                            (fullText.includes('|') && fullText.includes('Price') && fullText.includes('Market Cap')) ||
+                                            (messageText.includes('crypto') && (fullText.includes('$') || fullText.includes('Market Cap')))) {
+                                          return "Fetching live cryptocurrency data from CoinGecko";
+                                        }
+                                        if (messageText.includes('search')) {
+                                          return "Searching web for relevant information";
+                                        }
+                                        if (messageText.includes('news')) {
+                                          return "Gathering latest news and updates";
+                                        }
+                                        return "Processing request";
+                                      })()}
                                       status={isLoading && message === messages[messages.length - 1] ? "active" : "complete"}
                                     />
                                     <ChainOfThoughtStep
                                       icon={BarChart3}
                                       label="Response Formatting"
-                                      description="Organizing data with tables and proper markdown"
+                                      description={(() => {
+                                        const messageText = message.parts?.map(part => part.type === 'text' ? part.text : '').join('').toLowerCase() || '';
+                                        if (messageText.includes('table') || messageText.includes('|')) {
+                                          return "Organizing data into structured tables";
+                                        }
+                                        if (messageText.includes('research') || messageText.includes('analysis')) {
+                                          return "Structuring research findings";
+                                        }
+                                        return "Formatting response";
+                                      })()}
                                       status={isLoading && message === messages[messages.length - 1] ? "pending" : "complete"}
                                     />
                                   </ChainOfThoughtContent>
