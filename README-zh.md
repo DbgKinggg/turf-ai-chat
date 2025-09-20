@@ -23,12 +23,9 @@
 
 观看Turf AI实际运行：
 
-<video width="800" controls>
-  <source src="demo.mov" type="video/quicktime">
-  您的浏览器不支持视频标签。
-</video>
+![Turf AI 演示](sample.png)
 
-*快速演示AI助手如何通过实时数据集成研究加密货币项目。*
+*演示AI助手如何通过实时数据集成研究加密货币项目。*
 
 ## 🛠️ 技术栈
 

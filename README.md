@@ -24,12 +24,9 @@ This project is a clone of Surf AI created solely for educational purposes. It's
 
 See Turf AI in action:
 
-<video width="800" controls>
-  <source src="demo.mov" type="video/quicktime">
-  Your browser does not support the video tag.
-</video>
+![Turf AI Demo](sample.png)
 
-*A quick demonstration of the AI assistant researching cryptocurrency projects with real-time data integration.*
+*A demonstration of the AI assistant researching cryptocurrency projects with real-time data integration.*
 
 ## 🛠️ Tech Stack
 
