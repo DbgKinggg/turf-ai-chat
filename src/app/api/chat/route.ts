@@ -8,13 +8,16 @@ interface MCPClient {
   close: () => Promise<void>
 }
 
+// Using unknown for tools since MCP provides dynamic tool structure
+type MCPTool = Record<string, unknown>
+
 // Estimate token count (rough approximation: 1 token ≈ 4 characters)
 function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4)
 }
 
 // Truncate tool responses to prevent rate limit issues
-function truncateToolResponse(response: any, maxTokens: number = 8000): any {
+function truncateToolResponse(response: unknown, maxTokens: number = 8000): unknown {
   if (typeof response !== 'object' || response === null) {
     return response
   }
@@ -29,19 +32,23 @@ function truncateToolResponse(response: any, maxTokens: number = 8000): any {
   console.warn(`🔥 Tool response too large (${estimatedTokens} tokens), truncating to ${maxTokens}`)
 
   // For search results, keep first few and truncate text
-  if (response.data?.search_results?.length > 0) {
-    const results = response.data.search_results.slice(0, 5) // Keep first 5 results
+  const typedResponse = response as { data?: { search_results?: unknown[] } }
+  if (typedResponse.data?.search_results?.length && typedResponse.data.search_results.length > 0) {
+    const results = typedResponse.data.search_results.slice(0, 5) // Keep first 5 results
 
     return {
       ...response,
       data: {
-        ...response.data,
-        search_results: results.map((result: any) => ({
-          ...result,
-          text: result.text ? result.text.substring(0, 1000) + '...[truncated]' : result.text
-        })),
+        ...typedResponse.data,
+        search_results: results.map((result: unknown) => {
+          const typedResult = result as { text?: string; [key: string]: unknown }
+          return {
+            ...typedResult,
+            text: typedResult.text ? typedResult.text.substring(0, 1000) + '...[truncated]' : typedResult.text
+          }
+        }),
         _truncated: true,
-        _originalCount: response.data.search_results.length
+        _originalCount: typedResponse.data.search_results.length
       }
     }
   }
@@ -57,35 +64,43 @@ function truncateToolResponse(response: any, maxTokens: number = 8000): any {
 
 // Cache MCP client and tools to avoid recreating on every request
 let cachedHeuristClient: MCPClient | null = null
-let cachedTools: Record<string, any> = {}
+let cachedTools: Record<string, MCPTool> = {}
 let lastToolsUpdate = 0
 const TOOLS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 // Wrap tools to apply response filtering
-function wrapToolsWithFiltering(tools: Record<string, any>): Record<string, any> {
-  const wrappedTools: Record<string, any> = {}
+function wrapToolsWithFiltering(tools: Record<string, MCPTool>): Record<string, MCPTool> {
+  const wrappedTools: Record<string, MCPTool> = {}
 
   for (const [name, tool] of Object.entries(tools)) {
-    wrappedTools[name] = {
-      ...tool,
-      execute: async (...args: any[]) => {
-        try {
-          console.log(`🔧 Executing tool: ${name}`)
-          const result = await tool.execute(...args)
-          const filtered = truncateToolResponse(result)
-          const originalSize = JSON.stringify(result).length
-          const filteredSize = JSON.stringify(filtered).length
+    const toolWithExecute = tool as { execute?: (...args: unknown[]) => Promise<unknown> }
 
-          if (originalSize !== filteredSize) {
-            console.log(`🔥 Filtered ${name}: ${originalSize} → ${filteredSize} chars`)
+    if (toolWithExecute.execute) {
+      const originalExecute = toolWithExecute.execute
+
+      wrappedTools[name] = {
+        ...tool,
+        execute: async (...args: unknown[]) => {
+          try {
+            console.log(`🔧 Executing tool: ${name}`)
+            const result = await originalExecute(...args)
+            const filtered = truncateToolResponse(result)
+            const originalSize = JSON.stringify(result).length
+            const filteredSize = JSON.stringify(filtered).length
+
+            if (originalSize !== filteredSize) {
+              console.log(`🔥 Filtered ${name}: ${originalSize} → ${filteredSize} chars`)
+            }
+
+            return filtered
+          } catch (error) {
+            console.error(`Tool ${name} error:`, error)
+            throw error
           }
-
-          return filtered
-        } catch (error) {
-          console.error(`Tool ${name} error:`, error)
-          throw error
         }
       }
+    } else {
+      wrappedTools[name] = tool
     }
   }
 
@@ -130,7 +145,7 @@ async function getOrCreateMCPClient() {
     cachedTools = {}
     for (const [name, tool] of Object.entries(heuristTools)) {
       if (allowedTools.includes(name)) {
-        cachedTools[name] = tool
+        cachedTools[name] = tool as MCPTool
       }
     }
 
@@ -155,8 +170,8 @@ export async function POST(req: Request) {
       model,
       messages: convertToModelMessages(messages),
       system: CRYPTO_SYSTEM_PROMPT,
-      tools: allTools,
-      stopWhen: stepCountIs(10),
+      tools: allTools as never,
+      stopWhen: stepCountIs(10) as never,
       temperature: 0.7,
       maxOutputTokens: 4000,
       onFinish: ({ text, toolCalls, toolResults, usage, steps, finishReason }) => {
@@ -184,7 +199,7 @@ export async function POST(req: Request) {
     // Check for rate limit errors
     const isRateLimitError = errorMessage.includes('rate limit') ||
                             errorMessage.includes('429') ||
-                            (error as any)?.status === 429
+                            (error as { status?: number })?.status === 429
 
     // Check if error is related to context length
     const isContextError = errorMessage.toLowerCase().includes('context') ||
