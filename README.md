@@ -4,7 +4,9 @@
 
 A [Surf](https://asksurf.ai/chat) clone built for educational purposes to help developers learn how to build similar AI-powered cryptocurrency research applications.
 
-![Next.js](https://img.shields.io/badge/Next.js-15.5.3-black)![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)## ⚠️ Educational Purpose Only
+![Next.js](https://img.shields.io/badge/Next.js-15.5.3-black)![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+
+## ⚠️ Educational Purpose Only
 
 This project is a clone of Surf AI created solely for educational purposes. It's designed to help developers understand how to build AI-powered financial research tools. **This is not affiliated with the original Surf AI and should not be used for actual financial advice or trading decisions.**
 
