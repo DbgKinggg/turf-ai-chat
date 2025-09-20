@@ -19,6 +19,14 @@
 - **Markdown支持** - 支持富文本渲染和表格格式化数据展示
 - **流式响应** - 实时AI响应，配备适当的加载状态
 
+## 🎥 演示
+
+观看Turf AI实际运行：
+
+https://github.com/user-attachments/assets/demo.mov
+
+*快速演示AI助手如何通过实时数据集成研究加密货币项目。*
+
 ## 🛠️ 技术栈
 
 - **前端**: Next.js 15.5.3, React, TypeScript, Tailwind CSS

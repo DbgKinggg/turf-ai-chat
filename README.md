@@ -20,6 +20,14 @@ This project is a clone of Surf AI created solely for educational purposes. It's
 - **Markdown Support** - Rich text rendering with table formatting for data
 - **Streaming Responses** - Real-time AI responses with proper loading states
 
+## 🎥 Demo
+
+See Turf AI in action:
+
+https://github.com/user-attachments/assets/demo.mov
+
+*A quick demonstration of the AI assistant researching cryptocurrency projects with real-time data integration.*
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15.5.3, React, TypeScript, Tailwind CSS
